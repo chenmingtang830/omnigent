@@ -26,6 +26,7 @@ import {
   FolderOpenIcon,
   GitBranchIcon,
   InboxIcon,
+  LayoutGridIcon,
   ListChecksIcon,
   Loader2Icon,
   MailIcon,
@@ -198,23 +199,30 @@ interface SidebarProps {
 }
 
 /**
- * Which top-level nav button (New session / Inbox) is active for the current
- * route.
+ * Which top-level nav button (New session / Inbox / Board) is active for the
+ * current route.
  *
- * The inbox route has no param to key off, and the sidebar is basename-agnostic
- * (in embedded mode the routing seam rebases `to="/inbox"` → `${basename}/inbox`
- * behind its back), so `useMatch` / `NavLink` can't be used without knowing the
- * mount path. Instead compare the active route's last non-empty path segment,
- * which is `inbox` in both standalone and embedded modes. Conversation ids are
- * `conv_…`-prefixed, so a chat route's leaf can never collide with `inbox`.
+ * The inbox/board routes have no param to key off, and the sidebar is
+ * basename-agnostic (in embedded mode the routing seam rebases
+ * `to="/inbox"` → `${basename}/inbox` behind its back), so `useMatch` /
+ * `NavLink` can't be used without knowing the mount path. Instead compare
+ * the active route's last non-empty path segment, which is `inbox` / `board`
+ * in both standalone and embedded modes. Conversation ids are
+ * `conv_…`-prefixed, so a chat route's leaf can never collide with those.
  */
-function useActiveNavItem(): { isNewChatPage: boolean; isInboxPage: boolean } {
+function useActiveNavItem(): {
+  isNewChatPage: boolean;
+  isInboxPage: boolean;
+  isBoardPage: boolean;
+} {
   const { conversationId: activeConversationId } = useParams<{ conversationId: string }>();
-  const isInboxPage = useLocation().pathname.split("/").filter(Boolean).at(-1) === "inbox";
-  // Exclude inbox: it also has no `:conversationId`, so it would otherwise
-  // light up the "New session" button.
-  const isNewChatPage = activeConversationId == null && !isInboxPage;
-  return { isNewChatPage, isInboxPage };
+  const leaf = useLocation().pathname.split("/").filter(Boolean).at(-1);
+  const isInboxPage = leaf === "inbox";
+  const isBoardPage = leaf === "board";
+  // Exclude inbox/board: they also have no `:conversationId`, so they would
+  // otherwise light up the "New session" button.
+  const isNewChatPage = activeConversationId == null && !isInboxPage && !isBoardPage;
+  return { isNewChatPage, isInboxPage, isBoardPage };
 }
 
 /**
@@ -362,7 +370,7 @@ export function Sidebar({ open, onClose, dragProgress = null, onOpenSearch }: Si
   }
 
   // Which top-level nav button to highlight for the current route.
-  const { isNewChatPage, isInboxPage } = useActiveNavItem();
+  const { isNewChatPage, isInboxPage, isBoardPage } = useActiveNavItem();
 
   // On /settings the card keeps its chrome but swaps the conversation list
   // for the settings section nav (see settingsNav.tsx) — entering settings
@@ -482,6 +490,23 @@ export function Sidebar({ open, onClose, dragProgress = null, onOpenSearch }: Si
               {/* Inbox lives at the top next to the collapse toggle. Rendered
               as a Link so cmd/middle-click opens it in a new tab; onNavClick
               still closes the sidebar on a plain mobile tap. */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Board"
+                    className={cn("relative rounded-full", isBoardPage && "bg-muted")}
+                    data-testid="board-button"
+                  >
+                    <Link to="/board" onClick={onNavClick}>
+                      <LayoutGridIcon className="size-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Board</TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

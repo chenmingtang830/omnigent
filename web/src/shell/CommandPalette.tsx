@@ -20,6 +20,7 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   InboxIcon,
+  LayoutGridIcon,
   type LucideIcon,
   PanelLeftIcon,
   PanelRightIcon,
@@ -133,6 +134,13 @@ export function CommandPalette({
         icon: InboxIcon,
         keywords: ["notifications", "comments", "needs response"],
         run: () => navigate("/inbox"),
+      },
+      {
+        id: "go-board",
+        label: "Go to Board",
+        icon: LayoutGridIcon,
+        keywords: ["kanban", "tasks", "sessions", "running", "work"],
+        run: () => navigate("/board"),
       },
       {
         id: "go-settings",
