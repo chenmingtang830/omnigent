@@ -15,6 +15,7 @@
  */
 
 import type { Conversation } from "@/hooks/useConversations";
+import type { SessionStatus } from "@/lib/types";
 
 export type BoardColumnId = "running" | "waiting_for_you" | "done";
 
@@ -45,11 +46,19 @@ export const BOARD_COLUMNS: readonly BoardColumnDef[] = [
   },
 ] as const;
 
-/** Minimal session fields the board needs (sidebar Conversation shape). */
+/**
+ * Minimal session fields the board needs.
+ *
+ * Sidebar `Conversation.status` is typed as a subset (`idle|running|failed`);
+ * the live snapshot / stream may also emit `launching` / `waiting`. Accept
+ * the full `SessionStatus` union so column mapping stays accurate.
+ */
 export type BoardSession = Pick<
   Conversation,
-  "id" | "status" | "pending_elicitations_count" | "archived" | "updated_at" | "title" | "labels"
->;
+  "id" | "pending_elicitations_count" | "archived" | "updated_at" | "title" | "labels"
+> & {
+  status?: SessionStatus | Conversation["status"];
+};
 
 /**
  * Chip shown on a card — human-readable "what is going on".

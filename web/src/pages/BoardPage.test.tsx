@@ -31,6 +31,7 @@ function conversation(overrides: Partial<Conversation> = {}): Conversation {
 }
 
 function conversationsStub(rows: Conversation[], overrides: Record<string, unknown> = {}) {
+  // Cast via unknown: we only stub the fields BoardPage reads.
   return {
     data: { pages: [{ data: rows, first_id: null, last_id: null, has_more: false }] },
     hasNextPage: false,
@@ -40,7 +41,7 @@ function conversationsStub(rows: Conversation[], overrides: Record<string, unkno
     isError: false,
     refetch: vi.fn(),
     ...overrides,
-  };
+  } as unknown as ReturnType<typeof conversationsHook.useConversations>;
 }
 
 function renderBoard() {
@@ -74,7 +75,7 @@ describe("BoardPage", () => {
           updated_at: 2,
         }),
         conversation({ id: "done", title: "Shipped", archived: true, updated_at: 1 }),
-      ]) as ReturnType<typeof conversationsHook.useConversations>,
+      ]),
     );
 
     renderBoard();
@@ -92,9 +93,7 @@ describe("BoardPage", () => {
 
   it("switches to list view", () => {
     vi.mocked(conversationsHook.useConversations).mockReturnValue(
-      conversationsStub([
-        conversation({ id: "a", title: "Alpha", status: "running" }),
-      ]) as ReturnType<typeof conversationsHook.useConversations>,
+      conversationsStub([conversation({ id: "a", title: "Alpha", status: "running" })]),
     );
 
     renderBoard();
@@ -109,7 +108,7 @@ describe("BoardPage", () => {
       conversationsStub([
         conversation({ id: "a", title: "Login bug", status: "idle" }),
         conversation({ id: "b", title: "Docs polish", status: "idle" }),
-      ]) as ReturnType<typeof conversationsHook.useConversations>,
+      ]),
     );
 
     renderBoard();
@@ -119,9 +118,7 @@ describe("BoardPage", () => {
   });
 
   it("shows empty state when there are no sessions", () => {
-    vi.mocked(conversationsHook.useConversations).mockReturnValue(
-      conversationsStub([]) as ReturnType<typeof conversationsHook.useConversations>,
-    );
+    vi.mocked(conversationsHook.useConversations).mockReturnValue(conversationsStub([]));
     renderBoard();
     expect(screen.getByTestId("board-empty")).toBeTruthy();
     expect(screen.getByText("No sessions yet")).toBeTruthy();
