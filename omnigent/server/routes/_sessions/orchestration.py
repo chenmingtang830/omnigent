@@ -121,6 +121,7 @@ from omnigent.server.routes._session_create_validation import (
 # ``__all__`` and the facade's explicit re-exports, preserving its real runtime
 # bindings so a facade-level monkeypatch is honoured in this module too.
 from omnigent.server.routes._sessions.common import (  # noqa: F401
+    _CLAUDE_NATIVE_HARNESS,
     _CLAUDE_NATIVE_MESSAGE_TIMEOUT_S,
     _CLAUDE_NATIVE_MODEL,
     _CLAUDE_NATIVE_UI_LABEL_KEY,
@@ -5985,7 +5986,18 @@ async def _create_session_from_existing_agent(
             ) from exc
     else:
         try:
-            validated_launch_args = _validate_terminal_launch_args(body.terminal_launch_args)
+            if body.terminal_launch_args is not None:
+                validated_launch_args = _validate_terminal_launch_args(body.terminal_launch_args)
+            elif (
+                resolved_session_spec is not None
+                and _spec_harness(resolved_session_spec) == _CLAUDE_NATIVE_HARNESS
+                and resolved_session_spec.executor.config.get("permission_mode")
+            ):
+                validated_launch_args = _derive_terminal_launch_args_from_spec(
+                    resolved_session_spec
+                )
+            else:
+                validated_launch_args = None
         except ValueError as exc:
             raise OmnigentError(
                 f"invalid terminal_launch_args: {exc}",

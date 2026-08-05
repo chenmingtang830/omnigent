@@ -219,6 +219,30 @@ async def test_native_create_inherits_model_from_agent_spec(
     assert created["model_override"] == "claude-sonnet-4-6"
 
 
+async def test_native_create_inherits_claude_permission_mode_from_agent_spec(
+    client: httpx.AsyncClient,
+) -> None:
+    """A top-level Claude session persists its declared unattended mode."""
+    agent = await create_test_agent(
+        client,
+        name="claude-sonnet-4-6",
+        executor={
+            "type": "omnigent",
+            "config": {
+                "harness": "claude-native",
+                "permission_mode": "bypassPermissions",
+            },
+        },
+    )
+
+    created = await _create_session(client, agent["id"])
+
+    assert created["terminal_launch_args"] == [
+        "--permission-mode",
+        "bypassPermissions",
+    ]
+
+
 async def test_explicit_create_model_overrides_native_spec_default(
     client: httpx.AsyncClient,
 ) -> None:
