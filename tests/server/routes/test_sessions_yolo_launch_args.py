@@ -109,6 +109,24 @@ def test_claude_native_permission_mode_translates_to_flag() -> None:
     ]
 
 
+def test_claude_native_allowed_tools_translates_to_flag() -> None:
+    """A coordinator can pre-allow only its Omnigent dispatch tool."""
+    spec = _spec_with_config(
+        {
+            "harness": "claude-native",
+            "permission_mode": "auto",
+            "allowed_tools": "mcp__omnigent__sys_session_send",
+        }
+    )
+
+    assert _derive_terminal_launch_args_from_spec(spec) == [
+        "--permission-mode",
+        "auto",
+        "--allowedTools",
+        "mcp__omnigent__sys_session_send",
+    ]
+
+
 def test_claude_native_permission_mode_obeys_arg_length_bound() -> None:
     """
     Spec-derived ``permission_mode`` is bounded like request-supplied args.

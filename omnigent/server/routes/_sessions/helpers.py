@@ -7573,9 +7573,13 @@ def _derive_terminal_launch_args_from_spec(sub_spec: AgentSpec) -> list[str] | N
     harness = _spec_harness(sub_spec)
     if harness == _CLAUDE_NATIVE_HARNESS:
         permission_mode = sub_spec.executor.config.get("permission_mode")
+        allowed_tools = sub_spec.executor.config.get("allowed_tools")
+        args: list[str] = []
         if permission_mode:
-            return _validate_terminal_launch_args(["--permission-mode", str(permission_mode)])
-        return None
+            args.extend(["--permission-mode", str(permission_mode)])
+        if allowed_tools:
+            args.extend(["--allowedTools", str(allowed_tools)])
+        return _validate_terminal_launch_args(args) if args else None
     if harness == _CODEX_NATIVE_HARNESS:
         # Headless default: full bypass. The terminal_launch_args set the
         # codex --remote TUI's launch flags, which is what creates the

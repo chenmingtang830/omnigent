@@ -230,7 +230,8 @@ async def test_native_create_inherits_claude_permission_mode_from_agent_spec(
             "type": "omnigent",
             "config": {
                 "harness": "claude-native",
-                "permission_mode": "bypassPermissions",
+                "permission_mode": "auto",
+                "allowed_tools": "mcp__omnigent__sys_session_send",
             },
         },
     )
@@ -239,7 +240,9 @@ async def test_native_create_inherits_claude_permission_mode_from_agent_spec(
 
     assert created["terminal_launch_args"] == [
         "--permission-mode",
-        "bypassPermissions",
+        "auto",
+        "--allowedTools",
+        "mcp__omnigent__sys_session_send",
     ]
 
 

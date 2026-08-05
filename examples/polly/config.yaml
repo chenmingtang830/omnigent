@@ -9,7 +9,8 @@ executor:
   type: omnigent
   config:
     harness: claude-native
-    permission_mode: bypassPermissions
+    permission_mode: auto
+    allowed_tools: mcp__omnigent__sys_session_send
 llm:
   model: sonnet_5
   reasoning_effort: low
