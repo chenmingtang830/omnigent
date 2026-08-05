@@ -72,8 +72,8 @@ def test_sdk_session_model_metadata_stays_spec_driven() -> None:
 @pytest.mark.parametrize(
     ("harness", "alias", "expected"),
     [
-        ("codex-native", "sol", "gpt-5-6-sol"),
-        ("codex-native", "terra", "gpt-5-6-terra"),
+        ("codex-native", "sol", "gpt-5.6-sol"),
+        ("codex-native", "terra", "gpt-5.6-terra"),
         ("opencode-native", "kimi", "moonshotai/kimi-k3"),
     ],
 )
