@@ -28,6 +28,8 @@ _CLAUDE_SUBSCRIPTION_MODELS = (
 
 _CODEX_MODELS = ("gpt-5-6-sol", "gpt-5-6-luna", "gpt-5-6-terra", "gpt-5-5")
 
+_OPENCODE_MODELS = ("moonshotai/kimi-k3",)
+
 _STATIC_MODEL_FALLBACKS = {
     (SUBSCRIPTION_KIND, "claude"): StaticModelFallback(
         model_ids=_CLAUDE_SUBSCRIPTION_MODELS,
@@ -50,9 +52,31 @@ _STATIC_MODEL_FALLBACKS = {
             "be enumerated on this catalog path"
         ),
     ),
+    (CLI_CONFIG_KIND, "opencode"): StaticModelFallback(
+        model_ids=_OPENCODE_MODELS,
+        owner="OpenCode CLI-config adapter",
+        provenance="Richard's release-curated OpenCode provider catalog",
+        discovery_gap="OpenCode model discovery is not exposed through the host API",
+    ),
 }
 
 
 def static_model_fallback(provider_kind: str, cli: str) -> StaticModelFallback | None:
     """Return the owned fallback for a provider kind and CLI, if registered."""
     return _STATIC_MODEL_FALLBACKS.get((provider_kind, cli))
+
+
+def resolve_static_model_alias(provider_kind: str, cli: str, model: str) -> str:
+    """Resolve a stable alphabetic role alias against an owned model catalog."""
+    alias = model.strip().lower()
+    if not alias.isalpha():
+        return model
+    fallback = static_model_fallback(provider_kind, cli)
+    if fallback is None:
+        return model
+    matches = [
+        model_id
+        for model_id in fallback.model_ids
+        if alias in model_id.lower().replace("/", "-").split("-")
+    ]
+    return matches[0] if len(matches) == 1 else model

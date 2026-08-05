@@ -222,6 +222,7 @@ from omnigent.server.routes._sessions.helpers import (
     _message_text,
     _model_usage_bucket,
     _native_coding_agent_for_session,
+    _native_session_model_metadata_from_spec,
     _native_subagent_wrapper_labels_from_spec,
     _native_terminal_ensure_transport_error,
     _native_terminal_failure_from_runner_response,
@@ -258,6 +259,7 @@ from omnigent.server.routes._sessions.helpers import (
     _remove_session_worktree_best_effort,
     _require_declared_subagent,
     _require_external_status_forward,
+    _resolve_agent_spec,
     _resolve_harness,
     _resolve_llm_model,
     _resolve_subagent_spec,
@@ -5809,12 +5811,29 @@ async def _create_session_from_existing_agent(
             agent_cache=agent_cache,
         )
 
+    if body.sub_agent_name:
+        resolved_session_spec = await asyncio.to_thread(
+            _resolve_subagent_spec,
+            agent=agent,
+            sub_agent_name=body.sub_agent_name,
+            agent_cache=agent_cache,
+        )
+    else:
+        resolved_session_spec = await asyncio.to_thread(
+            _resolve_agent_spec,
+            agent=agent,
+            agent_cache=agent_cache,
+        )
+    spec_model, spec_effort = _native_session_model_metadata_from_spec(resolved_session_spec)
+
     # The persisted override reaches a native CLI as a ``--model`` argv
     # element at terminal launch, so reject shell-/flag-shaped values
     # before any row or worktree exists.
     model_override, reasoning_effort = validate_session_model_metadata(
-        model_override=body.model_override,
-        reasoning_effort=body.reasoning_effort,
+        model_override=body.model_override if body.model_override is not None else spec_model,
+        reasoning_effort=(
+            body.reasoning_effort if body.reasoning_effort is not None else spec_effort
+        ),
     )
 
     # Validated before any row exists so a bad value never creates an
@@ -5954,11 +5973,7 @@ async def _create_session_from_existing_agent(
     # mirrors the multipart create + PATCH paths.
     sub_spec: AgentSpec | None = None
     if body.sub_agent_name:
-        sub_spec = _resolve_subagent_spec(
-            agent=agent,
-            sub_agent_name=body.sub_agent_name,
-            agent_cache=agent_cache,
-        )
+        sub_spec = resolved_session_spec
         try:
             validated_launch_args = (
                 _derive_terminal_launch_args_from_spec(sub_spec) if sub_spec is not None else None

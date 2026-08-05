@@ -6,7 +6,7 @@ executor:
   config:
     harness: opencode-native
 llm:
-  model: moonshotai/kimi-k3
+  model: kimi
 prompt: |
   Independently inspect or implement the front-end task with attention to
   product polish, accessibility, and responsive behavior. Do not push or

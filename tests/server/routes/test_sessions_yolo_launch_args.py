@@ -21,8 +21,11 @@ from __future__ import annotations
 
 import pytest
 
+from omnigent.server.routes._sessions.helpers import (
+    _native_session_model_metadata_from_spec,
+)
 from omnigent.server.routes.sessions import _derive_terminal_launch_args_from_spec
-from omnigent.spec.types import AgentSpec, ExecutorSpec
+from omnigent.spec.types import AgentSpec, ExecutorSpec, LLMConfig
 
 
 def _spec_with_config(config: dict[str, str]) -> AgentSpec:
@@ -40,6 +43,54 @@ def _spec_with_config(config: dict[str, str]) -> AgentSpec:
         name="impl",
         executor=ExecutorSpec(type="omnigent", config=config),
     )
+
+
+def test_native_session_model_metadata_comes_from_spec() -> None:
+    """Native CLI sessions inherit the bundle's model and effort defaults."""
+    spec = AgentSpec(
+        spec_version=1,
+        name="coordinator",
+        executor=ExecutorSpec(type="omnigent", config={"harness": "claude-native"}),
+        llm=LLMConfig(model="sonnet", extra={"reasoning_effort": "low"}),
+    )
+
+    assert _native_session_model_metadata_from_spec(spec) == ("sonnet", "low")
+
+
+def test_sdk_session_model_metadata_stays_spec_driven() -> None:
+    """SDK harnesses keep resolving model configuration inside the workflow."""
+    spec = AgentSpec(
+        spec_version=1,
+        name="coordinator",
+        executor=ExecutorSpec(type="omnigent", config={"harness": "claude-sdk"}),
+        llm=LLMConfig(model="sonnet", extra={"reasoning_effort": "low"}),
+    )
+
+    assert _native_session_model_metadata_from_spec(spec) == (None, None)
+
+
+@pytest.mark.parametrize(
+    ("harness", "alias", "expected"),
+    [
+        ("codex-native", "sol", "gpt-5-6-sol"),
+        ("codex-native", "terra", "gpt-5-6-terra"),
+        ("opencode-native", "kimi", "moonshotai/kimi-k3"),
+    ],
+)
+def test_native_session_resolves_stable_model_aliases(
+    harness: str,
+    alias: str,
+    expected: str,
+) -> None:
+    """Stable role aliases resolve through the centrally owned model catalogs."""
+    spec = AgentSpec(
+        spec_version=1,
+        name="worker",
+        executor=ExecutorSpec(type="omnigent", config={"harness": harness}),
+        llm=LLMConfig(model=alias),
+    )
+
+    assert _native_session_model_metadata_from_spec(spec) == (expected, None)
 
 
 def test_claude_native_permission_mode_translates_to_flag() -> None:

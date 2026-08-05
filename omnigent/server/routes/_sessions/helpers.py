@@ -153,6 +153,7 @@ from omnigent.server.routes._sessions.common import (  # noqa: F401
     _MODEL_TOKEN_KEYS,
     _NATIVE_POLICY_NOT_ENFORCED_CODE,
     _NATIVE_TERMINAL_ENSURE_FAILED_CODE,
+    _OPENCODE_NATIVE_HARNESS,
     _PI_NATIVE_WRAPPER_LABEL_VALUE,
     _RUNNER_CONVICTION_POLL_S,
     _RUNNER_FORWARD_TIMEOUT,
@@ -7384,6 +7385,27 @@ def _resolve_subagent_spec(
     return _find_spec_by_name(parent_spec, sub_agent_name)
 
 
+def _resolve_agent_spec(
+    *,
+    agent: Agent,
+    agent_cache: AgentCache | None,
+) -> AgentSpec | None:
+    """Load an agent's trusted root spec for create-time launch defaults."""
+    if agent_cache is None:
+        return None
+    try:
+        return agent_cache.load(
+            agent.id, agent.bundle_location, expand_env=agent.session_id is None
+        ).spec
+    except Exception:  # noqa: BLE001
+        _logger.warning(
+            "Could not load bundle for agent %s to resolve session defaults",
+            agent.id,
+            exc_info=True,
+        )
+        return None
+
+
 def _require_declared_subagent(
     *,
     agent: Agent,
@@ -7449,6 +7471,25 @@ def _spec_harness(spec: AgentSpec) -> str:
 
     harness = spec.executor.config.get("harness") or spec.executor.type
     return canonicalize_harness(harness) or harness
+
+
+def _native_session_model_metadata_from_spec(
+    spec: AgentSpec | None,
+) -> tuple[str | None, str | None]:
+    """Return model and effort defaults required by native CLI sessions."""
+    if spec is None or not _spec_harness(spec).endswith("-native") or spec.llm is None:
+        return None, None
+    model = spec.llm.model
+    harness = _spec_harness(spec)
+    if harness in {_CODEX_NATIVE_HARNESS, _OPENCODE_NATIVE_HARNESS}:
+        from omnigent.model_fallbacks import resolve_static_model_alias
+        from omnigent.onboarding.provider_config import CLI_CONFIG_KIND, SUBSCRIPTION_KIND
+
+        cli = "codex" if harness == _CODEX_NATIVE_HARNESS else "opencode"
+        provider_kind = SUBSCRIPTION_KIND if cli == "codex" else CLI_CONFIG_KIND
+        model = resolve_static_model_alias(provider_kind, cli, model)
+    effort = spec.llm.extra.get("reasoning_effort")
+    return model, effort if isinstance(effort, str) else None
 
 
 def _spec_config_flag_explicitly_disabled(spec: AgentSpec, key: str) -> bool:

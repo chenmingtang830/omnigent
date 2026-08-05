@@ -11,7 +11,7 @@ executor:
     harness: claude-native
     permission_mode: auto
 llm:
-  model: sonnet
+  model: sonnet_5
   reasoning_effort: low
 
 spawn: true

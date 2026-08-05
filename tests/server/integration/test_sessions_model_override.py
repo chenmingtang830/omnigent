@@ -204,6 +204,72 @@ async def test_create_session_with_model_override_persists(
     assert get.json()["model_override"] == "databricks-claude-sonnet-4-6"
 
 
+async def test_native_create_inherits_model_from_agent_spec(
+    client: httpx.AsyncClient,
+) -> None:
+    """A native session persists its spec model before the CLI launches."""
+    agent = await create_test_agent(
+        client,
+        name="claude-sonnet-4-6",
+        executor={"type": "omnigent", "config": {"harness": "claude-native"}},
+    )
+
+    created = await _create_session(client, agent["id"])
+
+    assert created["model_override"] == "claude-sonnet-4-6"
+
+
+async def test_explicit_create_model_overrides_native_spec_default(
+    client: httpx.AsyncClient,
+) -> None:
+    """A caller's explicit model selection wins over the native spec default."""
+    agent = await create_test_agent(
+        client,
+        name="claude-sonnet-4-6",
+        executor={"type": "omnigent", "config": {"harness": "claude-native"}},
+    )
+    response = await client.post(
+        "/v1/sessions",
+        json={
+            "agent_id": agent["id"],
+            "initial_items": [],
+            "model_override": "claude-opus-4-6",
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["model_override"] == "claude-opus-4-6"
+
+
+async def test_native_child_inherits_model_from_subagent_spec(
+    client: httpx.AsyncClient,
+) -> None:
+    """A dispatched native child persists its own model, not the parent's."""
+    agent = await create_test_agent(
+        client,
+        name="parent-model",
+        executor={"type": "omnigent", "config": {"harness": "claude-native"}},
+        sub_agents=[
+            {
+                "name": "child-model",
+                "executor": {"type": "omnigent", "config": {"harness": "codex-native"}},
+            }
+        ],
+    )
+    response = await client.post(
+        "/v1/sessions",
+        json={
+            "agent_id": agent["id"],
+            "parent_session_id": agent["_session_id"],
+            "sub_agent_name": "child-model",
+            "initial_items": [],
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["model_override"] == "child-model"
+
+
 @pytest.mark.parametrize(
     "bad_model",
     [

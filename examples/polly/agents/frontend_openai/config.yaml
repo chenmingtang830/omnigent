@@ -7,7 +7,7 @@ executor:
     harness: codex-native
     yolo: false
 llm:
-  model: gpt-5.6-sol
+  model: sol
   reasoning_effort: medium
 prompt: |
   Handle the OpenAI side of a front-end task. Preserve the existing visual
