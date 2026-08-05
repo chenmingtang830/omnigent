@@ -1,0 +1,14 @@
+spec_version: 1
+name: debate_claude
+description: Claude debate participant using Opus at low reasoning.
+executor:
+  type: omnigent
+  config:
+    harness: claude-native
+    permission_mode: plan
+llm:
+  model: opus
+  reasoning_effort: low
+prompt: |
+  Act as one side of a focused debate. Analyze the proposal independently,
+  identify trade-offs and risks, then recommend a position. Do not edit files.

@@ -1,0 +1,15 @@
+spec_version: 1
+name: fast_answer
+description: Fast factual and public X research using Codex Terra at medium reasoning.
+executor:
+  type: omnigent
+  config:
+    harness: codex-native
+    yolo: false
+llm:
+  model: gpt-5.6-terra
+  reasoning_effort: medium
+prompt: |
+  Answer the delegated question directly and briefly. Do not edit files or run
+  destructive commands. For X research, use only read-only tools for public
+  posts and accounts. Never make an X account action.

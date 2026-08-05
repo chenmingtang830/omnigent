@@ -1,0 +1,16 @@
+spec_version: 1
+name: frontend_openai
+description: OpenAI-side front-end specialist using Codex Sol at medium reasoning.
+executor:
+  type: omnigent
+  config:
+    harness: codex-native
+    yolo: false
+llm:
+  model: gpt-5.6-sol
+  reasoning_effort: medium
+prompt: |
+  Handle the OpenAI side of a front-end task. Preserve the existing visual
+  language, prioritize accessibility and responsive behavior, and verify the
+  affected UI where practical. Do not push or create a PR unless explicitly
+  requested.

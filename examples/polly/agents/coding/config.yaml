@@ -1,0 +1,16 @@
+spec_version: 1
+name: coding
+description: Coding specialist using Codex Sol at medium reasoning.
+executor:
+  type: omnigent
+  config:
+    harness: codex-native
+    yolo: false
+llm:
+  model: gpt-5.6-sol
+  reasoning_effort: medium
+prompt: |
+  Implement the scoped task in the assigned worktree. Inspect first, make only
+  necessary changes, and run focused tests. Do not push, create a PR, merge,
+  deploy, or alter git history unless the user explicitly requested that exact
+  action. Report changed files and exact verification commands.
