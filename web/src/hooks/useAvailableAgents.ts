@@ -2,11 +2,7 @@ import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/identity";
 import { agentRootName } from "@/lib/forkHarness";
 import { capitalizeAgentName } from "@/lib/agentLabels";
-import {
-  nativeCodingAgentForAvailableAgent,
-  nativeCodingAgentForAgentName,
-  nativeCodingAgentForHarness,
-} from "@/lib/nativeCodingAgents";
+import { nativeCodingAgentForAvailableAgent } from "@/lib/nativeCodingAgents";
 
 export interface AvailableAgent {
   id: string;
@@ -54,8 +50,7 @@ const DISPLAY_NAMES: Record<string, string> = {
 
 function displayNameForAgent(name: string, harness?: string | null): string {
   return (
-    nativeCodingAgentForHarness(harness)?.displayName ??
-    nativeCodingAgentForAgentName(name)?.displayName ??
+    nativeCodingAgentForAvailableAgent({ name, harness: harness ?? null })?.displayName ??
     DISPLAY_NAMES[name] ??
     capitalizeAgentName(name)
   );
