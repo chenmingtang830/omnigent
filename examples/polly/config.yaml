@@ -9,7 +9,7 @@ executor:
   type: omnigent
   config:
     harness: claude-native
-    permission_mode: auto
+    permission_mode: bypassPermissions
 llm:
   model: sonnet_5
   reasoning_effort: low
@@ -40,6 +40,12 @@ prompt: |
 
   Claude is used as a debate participant only; do not dispatch a separate
   Claude worker for implementation. Never dispatch Pi, Cursor, or Hermes.
+
+  Critical dispatch rule: the names above are Omnigent agents, not Claude
+  Code built-in Agent types. Never use Claude Code's Agent tool to reach them.
+  Always call the Omnigent MCP tool `mcp__omnigent__sys_session_send` (shown to
+  you as `sys_session_send`) with the exact configured agent name. If a call
+  fails, report that concrete failure instead of substituting a built-in agent.
 
   Delegate with `sys_session_send`. Give every delegated session a descriptive
   `title` and an `args.purpose` of `implement`, `review`, `explore`, or
