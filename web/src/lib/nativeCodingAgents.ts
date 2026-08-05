@@ -206,7 +206,12 @@ export function nativeCodingAgentForAvailableAgent(
   agent: Pick<AvailableAgent, "name" | "harness"> | null | undefined,
 ): NativeCodingAgentSpec | undefined {
   if (agent == null) return undefined;
-  return nativeCodingAgentForHarness(agent.harness) ?? nativeCodingAgentForAgentName(agent.name);
+  // A bundled orchestrator can use a native harness as its executor (for
+  // example, Polly uses Claude Code) without itself being the native UI entry.
+  // Only the canonical wrapper names belong in the Harnesses group; otherwise
+  // the harness fallback would relabel and deduplicate an orchestrator as
+  // "Claude Code".
+  return nativeCodingAgentForAgentName(agent.name);
 }
 
 export function isNativeCodingAgent(
